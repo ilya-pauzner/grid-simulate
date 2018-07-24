@@ -235,7 +235,10 @@ def start_simulation():
     global window
     window.quit()
     global DEPTH
-    DEPTH = int(num.get())
+    s = num.get()
+    if s == '':
+        s = '4'
+    DEPTH = int(s)
     q = PriorityQueue()
 
     screen = Screen()
