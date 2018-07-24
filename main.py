@@ -1,21 +1,24 @@
 from queue import PriorityQueue
 from functools import total_ordering
-from time import sleep
 from turtle import Turtle, Screen
 from math import atan2, pi
-from tkinter import *
+from tkinter import Button, Entry, Radiobutton, Tk, IntVar, StringVar
 from collections import Counter
 import matplotlib.pyplot as plt
 
+COLORS = ['green', 'blue', 'black']
+
 
 class Vector:
-    def __init__(self, coords=(0, 0)):
+    def __init__(self, coords=(0, 0), time=None):
         self.dimension = len(coords)
         self.coords = coords
-        self.time = 0
-        for elem in coords:
-            self.time += elem * elem
-        self.time = self.time ** 0.5 / 100
+        self.time = time
+        if time is None:
+            self.time = 0
+            for elem in coords:
+                self.time += elem * elem
+            self.time = self.time ** 0.5 / 100
 
 
 def calc(n):
@@ -23,39 +26,49 @@ def calc(n):
     return sqrt_n / (int(sqrt_n))
 
 
-SquareVectors = (Vector(coords=(100, 0)),
-                 Vector(coords=(-100, 0)),
-                 Vector(coords=(0, 100)),
-                 Vector(coords=(0, -100)))
+PossibleVectors = {'SquareVectors': (Vector(coords=(100, 0), time=1),
+                                     Vector(coords=(-100, 0), time=1),
+                                     Vector(coords=(0, 100), time=1),
+                                     Vector(coords=(0, -100), time=1)),
 
-RectVectors = (Vector(coords=(100 * calc(17), 0)),
-               Vector(coords=(-100 * calc(17), 0)),
-               Vector(coords=(0, 100 * calc(19))),
-               Vector(coords=(0, -100 * calc(19))))
+                   'RectVectors': (Vector(coords=(100 * calc(17), 0)),
+                                   Vector(coords=(-100 * calc(17), 0)),
+                                   Vector(coords=(0, 100 * calc(19))),
+                                   Vector(coords=(0, -100 * calc(19)))),
 
-HexVectors = (Vector(coords=(100, 0)),
-              Vector(coords=(-50, 86.66)),
-              Vector(coords=(-50, -86.66)),
-              Vector(coords=(-100, 0)),
-              Vector(coords=(50, 86.66)),
-              Vector(coords=(50, -86.66))
-              )
+                   'HexVectors': (Vector(coords=(100, 0), time=1),
+                                  Vector(coords=(-50, 86.66), time=1),
+                                  Vector(coords=(-50, -86.66), time=1),
+                                  Vector(coords=(-100, 0), time=1),
+                                  Vector(coords=(50, 86.66), time=1),
+                                  Vector(coords=(50, -86.66), time=1)
+                                  ),
 
-CubeVectors = (Vector(coords=(100, 0, 0)),
-               Vector(coords=(-100, 0, 0)),
-               Vector(coords=(0, 100, 0)),
-               Vector(coords=(0, -100, 0)),
-               Vector(coords=(0, 0, 100)),
-               Vector(coords=(0, 0, -100)))
+                   'CubeVectors': (Vector(coords=(100, 0, 0), time=1),
+                                   Vector(coords=(-100, 0, 0), time=1),
+                                   Vector(coords=(0, 100, 0), time=1),
+                                   Vector(coords=(0, -100, 0), time=1),
+                                   Vector(coords=(0, 0, 100), time=1),
+                                   Vector(coords=(0, 0, -100), time=1)),
 
-PVectors = (Vector(coords=(100 * calc(13), 0, 0)),
-            Vector(coords=(-100 * calc(13), 0, 0)),
-            Vector(coords=(0, 100 * calc(17), 0)),
-            Vector(coords=(0, -100 * calc(17), 0)),
-            Vector(coords=(0, 0, 100 * calc(19))),
-            Vector(coords=(0, 0, -100 * calc(19))))
+                   'PVectors': (Vector(coords=(100 * calc(13), 0, 0)),
+                                Vector(coords=(-100 * calc(13), 0, 0)),
+                                Vector(coords=(0, 100 * calc(17), 0)),
+                                Vector(coords=(0, -100 * calc(17), 0)),
+                                Vector(coords=(0, 0, 100 * calc(19))),
+                                Vector(coords=(0, 0, -100 * calc(19)))),
 
-VECTORS = SquareVectors
+                   'DiamondVectors': (Vector(coords=(100, 100, 100), time=1),
+                                      Vector(coords=(-100, 100, 100), time=1),
+                                      Vector(coords=(100, -100, 100), time=1),
+                                      Vector(coords=(-100, -100, 100), time=1),
+                                      Vector(coords=(100, 100, -100), time=1),
+                                      Vector(coords=(-100, 100, -100), time=1),
+                                      Vector(coords=(100, -100, -100), time=1),
+                                      Vector(coords=(-100, -100, -100), time=1))
+                   }
+
+VECTORS = PossibleVectors['SquareVectors']
 DIMENSION = 2
 DEPTH = 0
 X = False
@@ -79,22 +92,32 @@ def good(v):
     return goodx(v) and goody(v) and goodz(v)
 
 
+def complicated_good(w):
+    if VECTORS == PossibleVectors['DiamondVectors']:
+        v = (w[0] // 100, w[1] // 100, w[2] // 100)
+        return (v[0] % 2 == v[1] % 2 == v[2] % 2) and (sum(v) % 4 in (0, 1))
+    return True
+
+
 @total_ordering
 class GridPoint:
-    def __init__(self, coords=(0, 0), vectors=None):
-        self.coords = coords
-        if vectors == None:
+    def __init__(self, coords=None, vectors=None):
+        if vectors is None:
             vectors = VECTORS
         self.vectors = vectors
-        self.dimension = len(coords)
+        self.dimension = vectors[0].dimension
+        if coords is None:
+            coords = tuple([0] * self.dimension)
+        self.coords = coords
         self.visible = (self.dimension == 2)
+        print(coords)
 
     def adj(self, now=0):
         res = []
         for v in self.vectors:
             tmp = tuple([self.coords[i] + v.coords[i] for i in range(self.dimension)])
-            if good(tmp):
-                res.append(GridPointEvent(round(now + v.time, 3), GridPoint(coords=tmp, vectors=self.vectors)))
+            if good(tmp) and complicated_good(tmp):
+                res.append(GridPointEvent(round(now + v.time, 4), GridPoint(coords=tmp, vectors=self.vectors)))
         return res
 
     def __eq__(self, other):
@@ -177,49 +200,31 @@ def eight():
     Z = True
 
 
-def set_square():
-    global VECTORS
-    VECTORS = SquareVectors
-
-
-def set_hex():
-    global VECTORS
-    VECTORS = HexVectors
-
-
-def set_rect():
-    global VECTORS
-    VECTORS = RectVectors
-
-
-def set_cube():
-    global VECTORS
-    VECTORS = CubeVectors
-
-
-def set_par():
-    global VECTORS
-    VECTORS = PVectors
+def set_grid_type():
+    global VECTORS, PossibleVectors, grid_type
+    VECTORS = PossibleVectors[grid_type.get()]
 
 
 def choose_grid():
-    global num
+    global num, grid_type
+    grid_type = StringVar()
     for elem in window.grid_slaves():
         elem.destroy()
     if DIMENSION == 2:
-        type = IntVar()
-        square = Radiobutton(window, text="Квадратная", value=1, variable=type, command=set_square)
+        square = Radiobutton(window, text="Квадратная", value='SquareVectors', variable=grid_type,
+                             command=set_grid_type)
         square.grid(column=0, row=0)
-        hex = Radiobutton(window, text="Шестиугольная", value=2, variable=type, command=set_hex, state=NORMAL)
+        hex = Radiobutton(window, text="Шестиугольная", value='HexVectors', variable=grid_type, command=set_grid_type)
         hex.grid(column=1, row=0)
-        rect = Radiobutton(window, text="Прямоугольная", value=3, variable=type, command=set_rect, state=NORMAL)
+        rect = Radiobutton(window, text="Прямоугольная", value='RectVectors', variable=grid_type, command=set_grid_type)
         rect.grid(column=2, row=0)
     else:
-        type = IntVar()
-        cube = Radiobutton(window, text="Кубическая", value=1, variable=type, command=set_cube)
+        cube = Radiobutton(window, text="Кубическая", value='CubeVectors', variable=grid_type, command=set_grid_type)
         cube.grid(column=0, row=0)
-        par = Radiobutton(window, text="Параллелипипед", value=2, variable=type, command=set_par, state=NORMAL)
+        par = Radiobutton(window, text="Параллелипипед", value='PVectors', variable=grid_type, command=set_grid_type)
         par.grid(column=1, row=0)
+        diam = Radiobutton(window, text="Алмаз", value='DiamondVectors', variable=grid_type, command=set_grid_type)
+        diam.grid(column=2, row=0)
     num = Entry(window, text='Глубина Симуляции')
     num.grid(column=0, row=1)
     start = Button(window, text='Старт', command=start_simulation)
@@ -245,10 +250,31 @@ def start_simulation():
     start = GridPointEvent()
     answer = []
     if start.visible:
+        times = [round(v.time, 4) for v in VECTORS]
+        times.sort()
+        times = list(set(times))
+        colors = dict()
+        for i in range(len(times)):
+            colors[times[i]] = COLORS[i]
+
+        time_turtles = [Turtle() for t in times]
+        for i in range(len(time_turtles)):
+            time_turtles[i].hideturtle()
+            time_turtles[i].up()
+            time_turtles[i].goto(screen.screensize()[0] - 100, screen.screensize()[1] - i * 50)
+            time_turtles[i].down()
+            time_turtles[i].width(3)
+            time_turtles[i].color(colors[times[i]])
+            time_turtles[i].forward(50)
+            time_turtles[i].write(str(times[i]))
+
         start.turtle.showturtle()
     q.put(start)
     while not q.empty() and NOW <= DEPTH:
         cur = q.get()
+
+        print(cur.point)
+
         text.clear()
         text.write(str(NOW), font=("Arial", 16, "normal"))
         if NOW != cur.time:
@@ -266,7 +292,16 @@ def start_simulation():
                 answer.append((1, w.time - 1e-9))
                 if w.visible:
                     w.turtle.goto(*(cur.point.coords))
-                    w.turtle.color('green')
+                    # w.turtle.color('green')
+
+                    dt = w.time - cur.time
+                    time_index = 0
+                    for i in range(len(times)):
+                        if abs(dt - times[i]) < abs(dt - times[time_index]):
+                            time_index = i
+                    w.turtle.color(colors[times[time_index]])
+                    w.turtle.width(3)
+
                     w.turtle.shape('arrow')
                     w.turtle.setheading(
                         180 * atan2(w.point.coords[1] - cur.point.coords[1],
@@ -309,19 +344,19 @@ window = Tk()
 window.geometry('400x400')
 
 dim = IntVar()
-space = Radiobutton(window, text="3D", value=3, variable=dim, command=real_world, state=NORMAL)
+space = Radiobutton(window, text="3D", value=3, variable=dim, command=real_world, )
 space.grid(column=1, row=0)
-plain = Radiobutton(window, text="2D", value=2, variable=dim, command=anime, state=NORMAL)
+plain = Radiobutton(window, text="2D", value=2, variable=dim, command=anime, )
 plain.grid(column=0, row=0)
 
 border = IntVar()
-half = Radiobutton(window, text="Половина", value=1, variable=border, command=semi, state=NORMAL)
+half = Radiobutton(window, text="Половина", value=1, variable=border, command=semi, )
 half.grid(column=1, row=1)
-quadrant = Radiobutton(window, text="Четверть", value=2, variable=border, command=quarter, state=NORMAL)
+quadrant = Radiobutton(window, text="Четверть", value=2, variable=border, command=quarter, )
 quadrant.grid(column=2, row=1)
-octant = Radiobutton(window, text="Октант", value=3, variable=border, command=eight, state=NORMAL)
+octant = Radiobutton(window, text="Октант", value=3, variable=border, command=eight, )
 octant.grid(column=3, row=1)
-whole = Radiobutton(window, text="Вся решетка", value=4, variable=border, command=all, state=NORMAL)
+whole = Radiobutton(window, text="Вся решетка", value=4, variable=border, command=all, )
 whole.grid(column=0, row=1)
 
 start = Button(window, text='Старт', command=choose_grid)
