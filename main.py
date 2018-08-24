@@ -74,6 +74,30 @@ DEPTH = 0
 X = False
 Y = False
 Z = False
+time_texts = {'1.0308': 'sqrt(17) / int(sqrt(17))', '1.0897': 'sqrt(19) / int(sqrt(19))'}
+
+
+def make_name():
+    ans = ''
+    if Z:
+        ans = 'octant of '
+    elif Y:
+        ans = 'quarter of '
+    elif X:
+        ans = 'half of '
+    if VECTORS == PossibleVectors['SquareVectors']:
+        ans += 'square'
+    if VECTORS == PossibleVectors['RectVectors']:
+        ans += 'rectangle'
+    if VECTORS == PossibleVectors['HexVectors']:
+        ans += 'hexagonal'
+    if VECTORS == PossibleVectors['CubeVectors']:
+        ans += 'cubic'
+    if VECTORS == PossibleVectors['PVectors']:
+        ans += 'parallelipiped'
+    if VECTORS == PossibleVectors['DiamondVectors']:
+        ans += 'diamond'
+    return ans
 
 
 def goodx(v):
@@ -269,7 +293,10 @@ def start_simulation():
             time_turtles[i].width(3)
             time_turtles[i].color(colors[times[i]])
             time_turtles[i].forward(50)
-            time_turtles[i].write(str(times[i]))
+            time_text = str(times[i])
+            if time_text in time_texts:
+                time_text = time_texts[time_text]
+            time_turtles[i].write(time_text)
 
         start.turtle.showturtle()
     q.put(start)
@@ -291,8 +318,8 @@ def start_simulation():
         if cur.point not in on_fire:
             for w in cur.point.adj(now=NOW):
                 q.put(w)
-                answer.append((0, cur.time))
-                answer.append((1, w.time - 1e-9))
+                answer.append((cur.time, 0))
+                answer.append((w.time - 1e-9, 1))
                 if w.visible:
                     w.turtle.goto(*(cur.point.coords))
                     # w.turtle.color('green')
@@ -318,12 +345,13 @@ def start_simulation():
             cur.turtle.color("red")
             cur.turtle.shape("circle")
     answer.sort()
+    print(answer)
     line = Counter()
     bal = 0
     for elem in answer:
-        if elem[0] == 0:
+        if elem[1] == 0:
             bal += 1
-            line[elem[1]] = bal
+            line[elem[0]] = bal
         else:
             bal -= 1
     DATA = [(0, 0)]
@@ -333,12 +361,17 @@ def start_simulation():
     X = [DATA[0][0]]
     Y = [DATA[0][1]]
     for i in range(1, len(DATA)):
-        X.append(DATA[i][0] - 1e-3)
+        X.append(DATA[i][0] - 1e-6)
         Y.append(DATA[i - 1][1])
 
         X.append(DATA[i][0])
         Y.append(DATA[i][1])
+    for i in range(len(X)):
+        print(X[i], Y[i])
     plt.plot(X, Y)
+    plt.title('N(t) graph in ' + make_name() + ' grid')
+    plt.xlabel('Time')
+    plt.ylabel('Quantity of particles')
     plt.show()
     screen.exitonclick()
 
