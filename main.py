@@ -235,23 +235,23 @@ def choose_grid():
     for elem in window.grid_slaves():
         elem.destroy()
     if DIMENSION == 2:
-        square = Radiobutton(window, text="Квадратная", value='SquareVectors', variable=grid_type,
+        square = Radiobutton(window, text="Square", value='SquareVectors', variable=grid_type,
                              command=set_grid_type)
         square.grid(column=0, row=0)
-        hex = Radiobutton(window, text="Шестиугольная", value='HexVectors', variable=grid_type, command=set_grid_type)
+        hex = Radiobutton(window, text="Hexagonal", value='HexVectors', variable=grid_type, command=set_grid_type)
         hex.grid(column=1, row=0)
-        rect = Radiobutton(window, text="Прямоугольная", value='RectVectors', variable=grid_type, command=set_grid_type)
+        rect = Radiobutton(window, text="Rectangle", value='RectVectors', variable=grid_type, command=set_grid_type)
         rect.grid(column=2, row=0)
     else:
-        cube = Radiobutton(window, text="Кубическая", value='CubeVectors', variable=grid_type, command=set_grid_type)
+        cube = Radiobutton(window, text="Cubic", value='CubeVectors', variable=grid_type, command=set_grid_type)
         cube.grid(column=0, row=0)
-        par = Radiobutton(window, text="Параллелипипед", value='PVectors', variable=grid_type, command=set_grid_type)
+        par = Radiobutton(window, text="Parallelipiped", value='PVectors', variable=grid_type, command=set_grid_type)
         par.grid(column=1, row=0)
-        diam = Radiobutton(window, text="Алмаз", value='DiamondVectors', variable=grid_type, command=set_grid_type)
+        diam = Radiobutton(window, text="Diamond", value='DiamondVectors', variable=grid_type, command=set_grid_type)
         diam.grid(column=2, row=0)
-    num = Entry(window, text='Глубина Симуляции')
+    num = Entry(window, text='Time')
     num.grid(column=0, row=1)
-    start = Button(window, text='Старт', command=start_simulation)
+    start = Button(window, text='Start', command=start_simulation)
     start.grid(column=0, row=2)
 
 
@@ -386,15 +386,15 @@ plain = Radiobutton(window, text="2D", value=2, variable=dim, command=anime, )
 plain.grid(column=0, row=0)
 
 border = IntVar()
-half = Radiobutton(window, text="Половина", value=1, variable=border, command=semi, )
+half = Radiobutton(window, text="Half", value=1, variable=border, command=semi, )
 half.grid(column=1, row=1)
-quadrant = Radiobutton(window, text="Четверть", value=2, variable=border, command=quarter, )
+quadrant = Radiobutton(window, text="Quarter", value=2, variable=border, command=quarter, )
 quadrant.grid(column=2, row=1)
-octant = Radiobutton(window, text="Октант", value=3, variable=border, command=eight, )
+octant = Radiobutton(window, text="Octant", value=3, variable=border, command=eight, )
 octant.grid(column=3, row=1)
-whole = Radiobutton(window, text="Вся решетка", value=4, variable=border, command=all, )
+whole = Radiobutton(window, text="Whole grid", value=4, variable=border, command=all, )
 whole.grid(column=0, row=1)
 
-start = Button(window, text='Старт', command=choose_grid)
+start = Button(window, text='begin', command=choose_grid)
 start.grid(column=0, row=2)
 window.mainloop()
